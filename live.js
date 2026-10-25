@@ -41,7 +41,8 @@
   fetch(base + '/api/public/site').then(r => r.json()).then(S => {
     if (!S || !S.ok) return;
     if (S.maintenance && S.maintenance.on) return maintenance(S);
-    if (S.downloadUrl) { C.DOWNLOAD_URL = S.downloadUrl; const b = document.getElementById('dlBtn'); if (b) { b.href = S.downloadUrl; b.target = ''; b.setAttribute('download', ''); b.innerHTML = '<svg class="i"><use href="#i-download"/></svg> تحميل مباشر لويندوز'; } }
+    // زر التحميل حسب اختيار لوحة التحكم: ملف مرفوع أو رابط أو تواصل واتساب
+    if (S.downloadMode === 'contact' || S.downloadUrl) { C.DOWNLOAD_URL = S.downloadMode === 'contact' ? '' : S.downloadUrl; if (typeof setDownload === 'function') setDownload(C.DOWNLOAD_URL); }
     if (S.version) document.querySelectorAll('.ver').forEach(x => { x.textContent = S.version; });
     if (S.version || S.fileSize) { const m = document.querySelector('.dl-meta'); if (m) m.textContent = `الإصدار ${S.version || C.VERSION || ''}${S.fileSize ? ' · ' + S.fileSize : ''}`; }
     if (S.whatsapp) { C.WHATSAPP = S.whatsapp; document.querySelectorAll('#supWa,#waFloat').forEach(a => { a.href = `https://wa.me/${S.whatsapp}`; }); }

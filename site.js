@@ -45,8 +45,12 @@ $('#yr').textContent = new Date().getFullYear();
 $('.dl-meta').textContent = `الإصدار ${C.VERSION || ''}${C.FILE_SIZE ? ' · ' + C.FILE_SIZE : ''}`;
 $('.req').textContent = 'المتطلبات: ' + (C.REQUIREMENTS || 'Windows 10 / 11');
 const dlBtn = $('#dlBtn');
-if (C.DOWNLOAD_URL) { dlBtn.href = C.DOWNLOAD_URL; dlBtn.setAttribute('download', ''); dlBtn.innerHTML = '⬇ تحميل مباشر لويندوز'; }
-else { dlBtn.href = wa('السلام عليكم، أرغب في تحميل نظام رواج لإدارة الأعمال'); dlBtn.target = '_blank'; dlBtn.innerHTML = ic('chat') + ' تواصل لاستلام نسخة التحميل'; }
+// زر التحميل: رابط مباشر، أو تواصل واتساب — لوحة التحكم تحدده (live.js) وconfig.js احتياط
+function setDownload(url) {
+  if (url) { dlBtn.href = url; dlBtn.target = ''; dlBtn.setAttribute('download', ''); dlBtn.innerHTML = ic('download') + ' تحميل مباشر لويندوز'; }
+  else { dlBtn.href = wa('السلام عليكم، أرغب في تحميل نظام رواج لإدارة الأعمال'); dlBtn.target = '_blank'; dlBtn.removeAttribute('download'); dlBtn.innerHTML = ic('chat') + ' تواصل لاستلام نسخة التحميل'; }
+}
+setDownload(C.DOWNLOAD_URL);
 $('#supWa').href = wa(); $('#waFloat').href = wa();
 $('.ph').textContent = C.PHONE_LABEL || ''; $('.em').textContent = C.EMAIL || '';
 $('#supMail').href = `mailto:${C.EMAIL}?subject=${encodeURIComponent('استفسار عن نظام رواج')}`;
