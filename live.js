@@ -40,7 +40,14 @@
   /* إعدادات الموقع من لوحة التحكم */
   fetch(base + '/api/public/site').then(r => r.json()).then(S => {
     if (!S || !S.ok) return;
+    // الشعار من لوحة التحكم: يستبدل شعار الصفحة كله (رمز واحد مشترك) وأيقونة التبويب
+    if (S.logo) {
+      const sym = document.getElementById('rw-logo');
+      if (sym) sym.innerHTML = `<image href="${S.logo.replace(/"/g, '')}" width="256" height="256" preserveAspectRatio="xMidYMid meet"/>`;
+      const fav = document.querySelector('link[rel=icon]'); if (fav) fav.href = S.logo;
+    }
     if (S.maintenance && S.maintenance.on) return maintenance(S);
+    if (S.phoneLabel) document.querySelectorAll('.ph').forEach(x => { x.textContent = S.phoneLabel; });
     // زر التحميل حسب اختيار لوحة التحكم: ملف مرفوع أو رابط أو تواصل واتساب
     if (S.downloadMode === 'contact' || S.downloadUrl) { C.DOWNLOAD_URL = S.downloadMode === 'contact' ? '' : S.downloadUrl; if (typeof setDownload === 'function') setDownload(C.DOWNLOAD_URL); }
     if (S.version) document.querySelectorAll('.ver').forEach(x => { x.textContent = S.version; });
