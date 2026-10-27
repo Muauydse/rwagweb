@@ -212,3 +212,20 @@ svg.logo{display:block;width:42px;aspect-ratio:1;flex:none}
 .x{display:grid;place-items:center}.x .i{width:20px;height:20px}
 .btn .i{width:19px;height:19px}
 .done .ok .i{width:34px;height:34px;stroke-width:2.6}
+
+/* قسم الربط مع هيئة الزكاة */
+.zt-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:center}
+.zt-steps{display:grid;gap:14px}
+.zt-step{display:flex;gap:16px;padding:20px;border-radius:var(--r);background:var(--card);border:1px solid var(--line)}
+.zt-step i{flex:none;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-style:normal;font-weight:700;color:#1c1405;background:linear-gradient(135deg,#fde7a8,var(--gold2))}
+.zt-step b{display:block;font-size:17px;margin-bottom:4px}.zt-step p{color:var(--text2);font-size:14px}
+.zt-card{padding:22px;border-radius:22px;background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid var(--line2);box-shadow:0 40px 80px -40px rgba(0,0,0,.7)}
+.zt-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}.zt-head .i{color:var(--gold);width:22px;height:22px}.zt-head b{flex:1}
+.zt-live{font-size:12px;font-weight:700;color:var(--green);padding:4px 10px;border-radius:20px;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3)}
+.zt-row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--card2);border:1px solid var(--line);margin-bottom:8px;font-size:14px}
+.zt-row .num{color:#a5b4fc;direction:ltr}.zt-row span:nth-child(2){color:var(--text2)}
+.zt-row em{font-style:normal;font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:20px}.zt-row em.ok{color:var(--green);background:rgba(52,211,153,.12)}.zt-row em.wait{color:var(--gold);background:rgba(245,212,138,.12)}
+.zt-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--muted)}
+.zt-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:12px;font-weight:700;color:#1c1405;background:linear-gradient(135deg,#fde7a8,var(--gold) 45%,var(--gold2))}.zt-btn .i{width:16px;height:16px}
+.zt-badges{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:28px}.zt-badges span{padding:8px 16px;border-radius:30px;font-size:13.5px;color:var(--text2);background:var(--card);border:1px solid var(--line)}
+@media(max-width:900px){.zt-grid{grid-template-columns:1fr}}
