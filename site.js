@@ -75,56 +75,59 @@ async function loadPlans() {
 }
 loadPlans();
 
-/* ---------------- نافذة طلب الاشتراك ---------------- */
+/* ---------------- نافذة طلب الاشتراك — نفس شكل وخطوات نافذة الاشتراك داخل النظام ---------------- */
 const M = { step: 0, planId: null, coupon: '', discount: 0, final: null, info: {} };
 const modal = $('#signup'), body = $('#mBody');
 const plan = () => PLANS.plans.find(p => p.id === M.planId);
 const total = () => M.final != null ? M.final : plan().price;
-function sumLine() { $('#mSum').innerHTML = plan() ? `${esc(plan().name)} — <b>${fmt(total())} ${esc(PLANS.currency)}</b>${M.discount ? ` <span style="color:var(--green)">(وفّرت ${fmt(M.discount)})</span>` : ''}` : ''; }
+const CHK = '<svg class="sg-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7.5"/></svg>';
+function sumLine() { $('#mSum').innerHTML = plan() ? `${esc(plan().name)} — <b>${fmt(total())}</b> ${esc(PLANS.currency)}${M.discount ? ` <span class="sg-badge">وفّرت ${fmt(M.discount)}</span>` : ''}` : ''; }
 function keep() { $$('[data-k]', body).forEach(i => { M.info[i.dataset.k] = i.value.trim(); }); }
-const F = (k, l, o = {}) => `<label class="m-field ${o.full ? 'full' : ''}">${l}${o.req ? ' <span class="req-star">*</span>' : ''}${o.sel ? `<select data-k="${k}">${o.sel.map(v => `<option ${M.info[k] === v ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select>` : o.area ? `<textarea data-k="${k}" rows="3">${esc(M.info[k] || '')}</textarea>` : `<input data-k="${k}" value="${esc(M.info[k] || '')}" placeholder="${esc(o.ph || '')}" ${o.ltr ? 'class="ltr"' : ''} ${o.list ? 'list="acts"' : ''}>`}</label>`;
+const F = (k, l, o = {}) => `<label class="sg-field ${o.full ? 'full' : ''}"><span>${l}${o.req ? ' <b class="req-star">*</b>' : ''}</span><input data-k="${k}" value="${esc(M.info[k] || '')}" placeholder="${esc(o.ph || '')}" ${o.ltr ? 'class="ltr" dir="ltr"' : ''}>${o.hint ? `<small>${o.hint}</small>` : ''}</label>`;
 function draw() {
-  $('#mSteps').innerHTML = ['الباقة', 'بيانات المنشأة', 'المراجعة والإرسال'].map((t, i) => `<div class="m-step ${i === M.step ? 'on' : i < M.step ? 'done' : ''}"><span>${i < M.step ? '✓' : i + 1}</span>${t}</div>`).join('<i></i>');
+  $('#mSteps').innerHTML = ['اختر الباقة', 'بياناتك', 'المراجعة والإرسال'].map((t, i) => `<div class="sg-step ${i === M.step ? 'active' : i < M.step ? 'done' : ''}"><span>${i < M.step ? CHK : i + 1}</span>${t}</div>`).join('<i></i>');
   $('#mBack').style.visibility = M.step ? 'visible' : 'hidden';
-  $('#mNext').textContent = M.step === 2 ? 'إرسال الطلب ✓' : 'التالي ←';
+  $('#mNext').innerHTML = M.step === 2 ? 'إرسال الطلب' : 'التالي ‹';
   if (M.step === 0) {
-    body.innerHTML = `<div class="m-plans">${PLANS.plans.map(p => `<div class="plan ${p.highlight ? 'best' : ''} ${p.id === M.planId ? 'on' : ''}" data-p="${esc(p.id)}">${p.highlight ? '<span class="tag">الأوفر</span>' : ''}<h4>${esc(p.name)}</h4><span class="dur">${esc(p.duration || '')}</span><div class="price">${fmt(p.price)} <small>${esc(PLANS.currency)}</small></div><ul>${(p.features || []).slice(0, 4).map(f => `<li>${esc(f)}</li>`).join('')}</ul></div>`).join('')}</div>
-      <div class="coupon"><input class="ltr" id="cCode" placeholder="كود الخصم (اختياري)" value="${esc(M.coupon)}" style="height:46px;border-radius:12px;border:1px solid var(--line2);background:rgba(7,10,20,.55);padding:0 14px;color:var(--text)"><button class="btn glass" id="cApply" type="button">تطبيق</button></div><div class="form-msg" id="cMsg"></div>`;
-    $$('[data-p]', body).forEach(b => b.onclick = () => { M.planId = b.dataset.p; T('plan', plan().name); $$('[data-p]', body).forEach(x => x.classList.toggle('on', x === b)); if (M.coupon) apply(); else { M.final = null; M.discount = 0; sumLine(); } });
+    body.innerHTML = `<div class="sg-plans">${PLANS.plans.map(p => `<button type="button" class="sg-plan ${p.highlight ? 'best' : ''} ${p.id === M.planId ? 'active' : ''}" data-p="${esc(p.id)}">${p.highlight ? '<span class="tag">الأوفر</span>' : ''}
+        <div class="nm">${esc(p.name)}</div><div class="pr">${fmt(p.price)} <small>${esc(PLANS.currency)}</small></div><div class="du">${esc(p.duration || '')}</div>
+        <ul>${(p.features || []).map(f => `<li>${CHK} ${esc(f)}</li>`).join('')}</ul></button>`).join('')}</div>
+      <div class="sg-coupon"><div class="sg-cbox"><input class="ltr" dir="ltr" id="cCode" placeholder="كود الخصم (اختياري)" value="${esc(M.coupon)}"><button class="sg-btn sec" id="cApply" type="button">تطبيق</button></div><div class="form-msg" id="cMsg"></div></div>`;
+    $$('[data-p]', body).forEach(b => b.onclick = () => { M.planId = b.dataset.p; T('plan', plan().name); $$('[data-p]', body).forEach(x => x.classList.toggle('active', x === b)); if (M.coupon) apply(); else { M.final = null; M.discount = 0; sumLine(); } });
     const apply = async () => {
       M.coupon = $('#cCode').value.trim(); const msg = $('#cMsg');
       if (!M.coupon) { M.final = null; M.discount = 0; msg.textContent = ''; return sumLine(); }
       if (!PLANS.live) { msg.className = 'form-msg err'; msg.textContent = 'تعذر التحقق من الكود الآن — أرسل الطلب وسنطبقه لك'; return; }
       msg.className = 'form-msg'; msg.textContent = 'جارٍ التحقق…';
       const r = await api('/api/public/coupon', { code: M.coupon, planId: M.planId }); T('coupon', M.coupon + (r.ok ? ' ✓' : ' ✗'));
-      if (r.ok) { M.final = r.final; M.discount = r.discount; msg.className = 'form-msg ok'; msg.textContent = `✓ تم تطبيق ${r.label} — السعر ${fmt(r.final)} ${PLANS.currency}`; }
+      if (r.ok) { M.final = r.final; M.discount = r.discount; msg.className = 'form-msg ok'; msg.textContent = `✓ تم تطبيق ${r.label} — السعر بعد الخصم ${fmt(r.final)} ${PLANS.currency}`; }
       else { M.final = null; M.discount = 0; M.coupon = ''; msg.className = 'form-msg err'; msg.textContent = r.error || 'كود الخصم غير صحيح'; }
       sumLine();
     };
     $('#cApply').onclick = apply; $('#cCode').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); apply(); } };
   } else if (M.step === 1) {
-    body.innerHTML = `<div class="m-grid"><div class="m-sec">صاحب الطلب</div>${F('ownerName', 'الاسم الكامل', { req: 1 })}${F('mobile', 'رقم الجوال المراد تفعيله', { req: 1, ltr: 1, ph: '05xxxxxxxx' })}${F('email', 'البريد الإلكتروني', { ltr: 1 })}${F('contactTime', 'الوقت المناسب للتواصل', { sel: ['أي وقت', 'صباحاً', 'مساءً'] })}
-      <div class="m-sec">بيانات النشاط التجاري</div>${F('company', 'اسم المنشأة', { req: 1 })}${F('companyEn', 'الاسم بالإنجليزية', { ltr: 1 })}${F('activity', 'نوع النشاط', { req: 1, list: 1 })}${F('legalName', 'الاسم القانوني')}${F('crNumber', 'السجل التجاري', { ltr: 1 })}${F('vatNumber', 'الرقم الضريبي', { ltr: 1 })}${F('employees', 'عدد الموظفين', { ltr: 1 })}${F('branches', 'عدد الفروع', { ltr: 1 })}
-      <div class="m-sec">العنوان</div>${F('city', 'المدينة', { req: 1 })}${F('district', 'الحي')}${F('street', 'الشارع')}${F('postalCode', 'الرمز البريدي', { ltr: 1 })}
-      <div class="m-sec">الدفع</div>${F('payMethod', 'طريقة الدفع المفضلة', { sel: PLANS.payMethods.length ? PLANS.payMethods : ['تحويل بنكي'] })}${F('notes', 'ملاحظات أو احتياجات خاصة', { area: 1, full: 1 })}</div>
-      <datalist id="acts">${['تجارة تجزئة', 'تجارة جملة', 'سوبرماركت / تموينات', 'مطعم / كافيه', 'ملابس وأزياء', 'إلكترونيات وجوالات', 'قطع غيار سيارات', 'مواد بناء وأدوات', 'صيدلية / مستلزمات طبية', 'عطور ومستحضرات تجميل', 'مكتبة وقرطاسية', 'أثاث ومفروشات', 'خدمات وصيانة', 'مقاولات'].map(a => `<option value="${a}">`).join('')}</datalist>`;
+    body.innerHTML = `<p class="sg-intro">ثلاث معلومات فقط — نستلم طلبك ونتواصل معك لإرسال مفتاح التفعيل. بعد التفعيل تُكمل إعداد نشاطك من داخل النظام.</p>
+      <div class="sg-grid">${F('company', 'اسم النشاط', { req: 1, full: 1, ph: 'مثال: مؤسسة الريادة التجارية' })}
+      ${F('mobile', 'رقم الجوال', { req: 1, ltr: 1, ph: '05xxxxxxxx', hint: 'يُستخدم للتواصل وتسجيل الدخول' })}${F('email', 'البريد الإلكتروني', { req: 1, ltr: 1, ph: 'name@example.com' })}</div>
+      <div class="sg-serial"><span>الرقم التسلسلي (اختياري — يُرسل مع الطلب)</span><input class="ltr" dir="ltr" data-k="serial" value="${esc(M.info.serial || '')}" placeholder="RWJ-XXXX-XXXX-XXXX-XXXX"><small>يظهر أسفل شاشة الدخول بعد تثبيت النظام — إن كان مثبتاً لديك أضفه ليُربط طلبك بجهازك مباشرة</small></div>`;
   } else {
-    const I = M.info, row = (k, v) => v ? `<div><small>${k}</small>${esc(v)}</div>` : '';
-    body.innerHTML = `<div class="plan best" style="flex-direction:row;align-items:center;justify-content:space-between"><div><small style="color:var(--muted)">الباقة المختارة</small><h4>${esc(plan().name)}</h4><span class="dur">${esc(plan().duration || '')}</span></div>
-      <div style="text-align:left">${M.discount ? `<div style="text-decoration:line-through;color:var(--muted)">${fmt(plan().price)}</div>` : ''}<div class="price" style="margin:0">${fmt(total())} <small>${esc(PLANS.currency)}</small></div></div></div>
-      <div class="review" style="margin-top:14px">${row('الاسم', I.ownerName)}${row('الجوال', I.mobile)}${row('البريد', I.email)}${row('المنشأة', I.company)}${row('النشاط', I.activity)}${row('المدينة', I.city)}${row('السجل التجاري', I.crNumber)}${row('الرقم الضريبي', I.vatNumber)}${row('طريقة الدفع', I.payMethod)}</div>
-      <label class="agree"><input type="checkbox" id="agree"> أوافق على أن يتواصل معي فريق رواج لإتمام الاشتراك، وأن البيانات المدخلة صحيحة.</label>`;
+    const I = M.info, row = (k, v, l) => v ? `<div><div class="k">${k}</div><div class="v ${l ? 'ltr' : ''}">${esc(v)}</div></div>` : '';
+    body.innerHTML = `<div class="sg-plan-sum"><div><div class="k">الباقة المختارة</div><div class="nm">${esc(plan().name)}</div><div class="du">${esc(plan().duration || '')}</div></div>
+        <div class="pr">${M.discount ? `<s>${fmt(plan().price)} ${esc(PLANS.currency)}</s>` : ''}<b>${fmt(total())} <small>${esc(PLANS.currency)}</small></b>${M.coupon ? `<span class="sg-badge">${esc(M.coupon)}</span>` : ''}</div></div>
+      <div class="sg-info">${row('اسم النشاط', I.company)}${row('الجوال', I.mobile, 1)}${row('البريد', I.email, 1)}${row('الرقم التسلسلي', I.serial, 1)}</div>
+      <label class="sg-agree"><input type="checkbox" id="agree"> أوافق على أن يتواصل معي فريق رواج لإتمام الاشتراك، وأن البيانات المدخلة صحيحة.</label>`;
   }
   sumLine();
 }
 function validate() {
   if (M.step === 1) {
     keep(); const I = M.info;
-    const miss = [['ownerName', 'الاسم'], ['mobile', 'رقم الجوال'], ['company', 'اسم المنشأة'], ['activity', 'نوع النشاط'], ['city', 'المدينة']].find(([k]) => !I[k]);
-    $$('.m-field', body).forEach(x => x.classList.remove('bad'));
+    const miss = [['company', 'اسم النشاط'], ['mobile', 'رقم الجوال'], ['email', 'البريد الإلكتروني']].find(([k]) => !I[k]);
+    $$('.sg-field', body).forEach(x => x.classList.remove('bad'));
     if (miss) { const i = $(`[data-k="${miss[0]}"]`, body); i.parentElement.classList.add('bad'); i.focus(); toast(`الحقل «${miss[1]}» مطلوب`, 1); return false; }
     if (!/^\+?\d{9,15}$/.test(I.mobile.replace(/[\s-]/g, ''))) { toast('رقم الجوال غير صحيح', 1); return false; }
-    if (I.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(I.email)) { toast('البريد الإلكتروني غير صحيح', 1); return false; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(I.email)) { toast('البريد الإلكتروني غير صحيح', 1); return false; }
+    if (I.serial && !/^RWJ(-[A-Z0-9]{4}){4}$/i.test(I.serial)) { toast('الرقم التسلسلي بالشكل RWJ-XXXX-XXXX-XXXX-XXXX', 1); return false; }
   }
   if (M.step === 2 && !$('#agree').checked) { toast('يرجى الموافقة للمتابعة', 1); return false; }
   return true;
@@ -132,9 +135,11 @@ function validate() {
 async function openSignup(planId) {
   if (!PLANS) await loadPlans();
   Object.assign(M, { step: 0, planId: planId || (PLANS.plans.find(p => p.highlight) || PLANS.plans[0] || {}).id, coupon: '', discount: 0, final: null });
-  $('#mNext').hidden = false; $('#mBack').hidden = false;
-  if (!PLANS.plans.length) { body.innerHTML = `<div class="done"><h3>تواصل معنا لمعرفة الباقات</h3><p><a class="btn gold" href="${wa()}" target="_blank">واتساب</a></p></div>`; $('#mNext').hidden = true; }
-  else draw();
+  $('#mNext').hidden = false; $('#mBack').hidden = false; $('#mWa').hidden = true;
+  if (!PLANS.plans.length) {
+    $('#mSteps').innerHTML = ''; $('#mNext').hidden = true; $('#mBack').hidden = true;
+    body.innerHTML = `<div class="sg-done"><h3>تعذر تحميل الباقات الآن</h3><p>تحقق من اتصال الإنترنت أو تواصل معنا مباشرة عبر واتساب</p><p style="margin-top:16px"><a class="sg-btn wa" href="${wa()}" target="_blank" rel="noopener">${ic('chat')} تواصل عبر واتساب</a></p></div>`;
+  } else draw();
   modal.hidden = false; document.body.style.overflow = 'hidden';
 }
 function closeSignup() { modal.hidden = true; document.body.style.overflow = ''; }
@@ -144,18 +149,23 @@ $('#mNext').onclick = async () => {
   if (!validate()) return;
   if (M.step < 2) { M.step++; draw(); return; }
   const b = $('#mNext'); b.disabled = true; b.textContent = 'جارٍ الإرسال…';
-  const r = await api('/api/public/signup', { planId: M.planId, coupon: M.coupon, customer: M.info });
+  const r = await api('/api/public/signup', { planId: M.planId, coupon: M.coupon, customer: M.info, serial: M.info.serial || '' });
   b.disabled = false;
   if (!r.ok) {
-    b.textContent = 'إرسال الطلب ✓';
-    const text = `السلام عليكم، أرغب في الاشتراك في نظام رواج\nالباقة: ${plan().name}\nالاسم: ${M.info.ownerName}\nالمنشأة: ${M.info.company}\nالجوال: ${M.info.mobile}\nالمدينة: ${M.info.city}`;
-    body.insertAdjacentHTML('beforeend', `<div class="form-msg err" style="margin-top:12px">${esc(r.error || 'تعذر إرسال الطلب الآن')} — <a href="${wa(text)}" target="_blank" style="text-decoration:underline">أرسله عبر واتساب</a></div>`);
+    b.textContent = 'إرسال الطلب';
+    const text = `السلام عليكم، أرغب في الاشتراك في نظام رواج\nالباقة: ${plan().name}\nاسم النشاط: ${M.info.company}\nالجوال: ${M.info.mobile}\nالبريد: ${M.info.email}${M.info.serial ? '\nالرقم التسلسلي: ' + M.info.serial : ''}`;
+    body.insertAdjacentHTML('beforeend', `<div class="form-msg err" style="margin-top:12px">${esc(r.error || 'تعذر إرسال الطلب — حاول مرة أخرى')} — <a href="${wa(text)}" target="_blank" rel="noopener" style="text-decoration:underline">أرسله عبر واتساب</a></div>`);
     return;
   }
   T('signup_sent', plan().name + ' — ' + fmt(total()));
-  M.step = 3; $('#mSteps').innerHTML = ''; $('#mSum').innerHTML = ''; $('#mBack').hidden = true; b.textContent = 'تم';
-  body.innerHTML = `<div class="done"><div class="ok">${ic('check')}</div><h3>تم استلام طلبك بنجاح</h3><p>شكراً ${esc(M.info.ownerName)} — <b>سيتم التواصل معك قريباً</b> على الرقم <span class="ltr">${esc(M.info.mobile)}</span> لإتمام الاشتراك وإرسال بيانات الدخول وعقد الاشتراك.</p>
-    <p style="margin-top:18px"><a class="btn glass" href="${wa(`السلام عليكم، أرسلت طلب اشتراك من الموقع\nالمنشأة: ${M.info.company}\nالباقة: ${plan().name}`)}" target="_blank">${ic('chat')} تواصل معنا الآن</a></p></div>`;
+  M.step = 3; $('#mSteps').innerHTML = ''; $('#mBack').hidden = true; b.textContent = 'تم';
+  const sum = `${esc(plan().name)} · <b>${fmt(total())}</b> ${esc(PLANS.currency)}`;
+  $('#mSum').innerHTML = '';
+  body.innerHTML = `<div class="sg-done"><div class="sg-check">${CHK}</div><h3>تم استلام طلبك بنجاح</h3>
+    <p>شكراً لك — <b>سيتم التواصل معك قريباً</b> على الرقم <span class="ltr" dir="ltr">${esc(M.info.mobile)}</span> لإتمام الاشتراك وإرسال مفتاح التفعيل. بعد التفعيل يفتح لك النظام إعداد نشاطك خطوة بخطوة.</p>
+    <div class="sg-muted">الباقة: ${sum}</div></div>`;
+  const w = $('#mWa'); w.hidden = false;
+  w.href = wa(`السلام عليكم، أرسلت طلب اشتراك في نظام رواج\nالمنشأة: ${M.info.company}\nالباقة: ${plan().name}\nالجوال: ${M.info.mobile}`);
 };
 document.addEventListener('click', e => {
   const s = e.target.closest('[data-signup]'); if (s) { e.preventDefault(); openSignup(s.dataset.signup || null); }
