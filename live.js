@@ -47,6 +47,7 @@
       const fav = document.querySelector('link[rel=icon]'); if (fav) fav.href = S.logo;
     }
     if (S.maintenance && S.maintenance.on) return maintenance(S);
+    document.dispatchEvent(new CustomEvent('rw:site', { detail: S }));  // الشروحات وحسابات التواصل (media.js)
     if (S.phoneLabel) document.querySelectorAll('.ph').forEach(x => { x.textContent = S.phoneLabel; });
     // زر التحميل حسب اختيار لوحة التحكم: ملف مرفوع أو رابط أو تواصل واتساب
     if (S.downloadMode === 'contact' || S.downloadUrl) { C.DOWNLOAD_URL = S.downloadMode === 'contact' ? '' : S.downloadUrl; if (typeof setDownload === 'function') setDownload(C.DOWNLOAD_URL); }
