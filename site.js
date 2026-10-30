@@ -174,6 +174,10 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeSignup(); });
 
 /* ---------------- الحركة والتنقل ---------------- */
+// الجوال يستعيد آخر موضع تمرير عند الفتح (وأحياناً ينزل لأسفل الصفحة) — نبدأ دائماً من الأعلى ما لم يكن في الرابط قسم محدد
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+const toTop = () => { if (!location.hash) { const h = document.documentElement, b = h.style.scrollBehavior; h.style.scrollBehavior = 'auto'; scrollTo(0, 0); h.style.scrollBehavior = b; } };
+toTop(); addEventListener('load', toTop); addEventListener('pageshow', e => { if (e.persisted) toTop(); });
 const io = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) { x.target.classList.add('in'); io.unobserve(x.target); } }), { threshold: .12 });
 $$('.reveal').forEach(el => io.observe(el));
 addEventListener('scroll', () => $('#nav').classList.toggle('scrolled', scrollY > 20), { passive: true });
