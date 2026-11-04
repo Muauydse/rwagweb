@@ -18,6 +18,15 @@
   const socIcon = p => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${SOC[p][2]}"/></svg>`;
   const thumb = (id, q = 'hqdefault') => `https://i.ytimg.com/vi/${id}/${q}.jpg`;
   let VIDS = [], filter = 'all', cur = -1;
+  const C = window.RAWAJ_SITE || {};
+  const nf = n => (Number(n) || 0).toLocaleString('en-US');
+  const viewer = (() => { try { let v = localStorage.getItem('rw_viewer'); if (!v) { v = 'web_' + Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, '0')).join(''); localStorage.setItem('rw_viewer', v); } return v; } catch (e) { return 'web_' + Math.random().toString(16).slice(2, 18); } })();
+  const engage = body => fetch(String(C.PANEL_URL || '').replace(/\/$/, '') + '/api/public/video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, viewer }) })
+    .then(r => r.json()).catch(() => ({ ok: false, offline: true }));
+  const ago = t => { const m = Math.max(1, Math.round((Date.now() - new Date(t)) / 60000)); return m < 60 ? `قبل ${m} دقيقة` : m < 1440 ? `قبل ${Math.round(m / 60)} ساعة` : `قبل ${Math.round(m / 1440)} يوم`; };
+  const EYE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>';
+  const BUBBLE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>';
 
   /* ---------- حسابات التواصل ---------- */
   function social(list) {
@@ -36,7 +45,7 @@
     g.innerHTML = list.map(({ v, i }, n) => `<button type="button" class="vcard ${n === 0 && filter === 'all' ? 'feat' : ''}" data-v="${i}">
       <span class="vthumb"><img loading="lazy" src="${thumb(v.yt, n === 0 && filter === 'all' ? 'maxresdefault' : 'hqdefault')}" onerror="this.onerror=null;this.src='${thumb(v.yt)}'" alt="">
         <span class="vplay"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span><span class="vkind ${v.kind}">${KIND[v.kind] || 'شرح'}</span></span>
-      <span class="vbody"><b>${esc(v.title)}</b>${v.desc ? `<small>${esc(v.desc)}</small>` : ''}</span></button>`).join('') || '<p class="vempty">لا توجد فيديوهات في هذا التصنيف حالياً</p>';
+      <span class="vbody"><b>${esc(v.title)}</b>${v.desc ? `<small>${esc(v.desc)}</small>` : ''}<span class="vstats"><span>${EYE}${nf(v.views)}</span><span>${HEART}${nf(v.likes)}</span><span>${BUBBLE}${nf(v.comments)}</span></span></span></button>`).join('') || '<p class="vempty">لا توجد فيديوهات في هذا التصنيف حالياً</p>';
     $$('[data-v]', g).forEach(b => b.onclick = () => open(+b.dataset.v));
   }
   function render(S) {
@@ -62,11 +71,28 @@
       <div class="vp-main"><div class="vp-stage"><div class="vp-frame"></div>
           <button type="button" class="vp-nav prev" aria-label="السابق"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button><button type="button" class="vp-nav next" aria-label="التالي"><svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button></div>
         <aside class="vp-list"></aside></div>
-      <div class="vp-foot"><p class="vp-desc"></p><a class="vp-yt" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="${SOC.youtube[2]}"/></svg> مشاهدة على يوتيوب</a></div></div>`;
+      <div class="vp-foot"><p class="vp-desc"></p><a class="vp-yt" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="${SOC.youtube[2]}"/></svg> مشاهدة على يوتيوب</a></div>
+      <div class="vp-eng"><span class="vp-views">${EYE}<b>0</b> مشاهدة</span><button type="button" class="vp-like" aria-pressed="false">${HEART}<b>0</b> <span>إعجاب</span></button><span class="vp-ccount">${BUBBLE}<b>0</b> تعليق</span></div>
+      <div class="vp-cm"><form class="vp-cform" autocomplete="off"><input name="name" maxlength="60" placeholder="اسمك" required><textarea name="text" maxlength="1000" rows="2" placeholder="اكتب تعليقك أو سؤالك عن هذا الشرح…" required></textarea><button type="submit">إرسال التعليق</button></form>
+        <div class="vp-cmsg" hidden></div><div class="vp-clist"></div></div></div>`;
     document.body.appendChild(m);
     m.addEventListener('click', e => { if (e.target === m) close(); });
     $('.vp-x', m).onclick = close;
     $('.vp-nav.prev', m).onclick = () => step(-1); $('.vp-nav.next', m).onclick = () => step(1);
+    $('.vp-like', m).onclick = async () => {
+      const v = VIDS[cur]; if (!v) return; const b = $('.vp-like', m); b.disabled = true;
+      const r = await engage({ action: 'like', vid: v.id }); b.disabled = false;
+      if (r.ok) { paint(r); v.likes = r.likes; track('video_like', v.title); }
+    };
+    $('.vp-cform', m).onsubmit = async e => {
+      e.preventDefault(); const f = e.target, v = VIDS[cur]; if (!v) return;
+      const name = f.name.value.trim(), text = f.text.value.trim(); if (name.length < 2 || text.length < 2) return;
+      try { localStorage.setItem('rw_cname', name); } catch (x) { }
+      const btn = $('button', f); btn.disabled = true; const r = await engage({ action: 'comment', vid: v.id, name, text }); btn.disabled = false;
+      const msg = $('.vp-cmsg', m); msg.hidden = false;
+      if (r.ok) { f.text.value = ''; msg.className = 'vp-cmsg ok'; msg.textContent = '✓ تم إرسال تعليقك — سيظهر بعد مراجعته من فريق رواج'; track('video_comment', v.title); }
+      else { msg.className = 'vp-cmsg err'; msg.textContent = r.error || 'تعذر إرسال التعليق الآن'; }
+    };
     document.addEventListener('keydown', e => { if (m.hidden) return; if (e.key === 'Escape') close(); else if (e.key === 'ArrowRight') step(-1); else if (e.key === 'ArrowLeft') step(1); });
     return m;
   }
@@ -81,7 +107,23 @@
     const on = $('.vp-it.on', m); if (on) on.scrollIntoView({ block: 'nearest' });
     $('.vp-list', m).hidden = VIDS.length < 2; $$('.vp-nav', m).forEach(b => { b.hidden = VIDS.length < 2; });
     if (m.hidden) { m.hidden = false; document.body.style.overflow = 'hidden'; setTimeout(() => m.classList.add('in'), 20); }
+    loadEngage(v);
     track('video', v.title);
+  }
+  function paint(r) {
+    const m = $('#vp'); if (!m) return;
+    $('.vp-views b', m).textContent = nf(r.views); $('.vp-like b', m).textContent = nf(r.likes); $('.vp-ccount b', m).textContent = nf(r.comments);
+    const lk = $('.vp-like', m); lk.classList.toggle('on', !!r.liked); lk.setAttribute('aria-pressed', r.liked ? 'true' : 'false');
+  }
+  async function loadEngage(v) {
+    const m = $('#vp'); paint(v); $('.vp-clist', m).innerHTML = ''; $('.vp-cmsg', m).hidden = true;
+    try { const n = localStorage.getItem('rw_cname'); if (n) $('.vp-cform', m).name.value = n; } catch (e) { }
+    engage({ action: 'view', vid: v.id });
+    const r = await engage({ action: 'comments', vid: v.id });
+    if (!r.ok || VIDS[cur] !== v) return;
+    Object.assign(v, { views: r.views, likes: r.likes, comments: r.comments }); paint(r);
+    $('.vp-clist', m).innerHTML = (r.list || []).map(c => `<div class="vp-c"><div class="vp-ch"><b>${esc(c.name)}</b><small>${ago(c.created)}</small></div><p>${esc(c.text)}</p>
+      ${c.reply ? `<div class="vp-cr"><b>رد فريق رواج</b><p>${esc(c.reply.text)}</p></div>` : ''}</div>`).join('') || '<p class="vp-cnone">لا توجد تعليقات بعد — كن أول من يعلّق</p>';
   }
   function step(d) { if (VIDS.length) open((cur + d + VIDS.length) % VIDS.length); }
   function close() { const m = $('#vp'); if (!m) return; m.classList.remove('in'); $('.vp-frame', m).innerHTML = ''; setTimeout(() => { m.hidden = true; }, 220); document.body.style.overflow = ''; }

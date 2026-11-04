@@ -356,3 +356,24 @@ svg.logo{display:block;width:42px;aspect-ratio:1;flex:none}
 .sg-bank b{font-size:13px}.sg-bank pre{margin:6px 0 0;font:inherit;font-size:13.5px;white-space:pre-wrap;color:var(--a-text)}
 
 @media (max-width:720px){.nav-cta [data-renew]{display:none}}
+
+/* تفاعل الشروحات: المشاهدات والإعجاب والتعليقات */
+.vstats{display:flex;gap:14px;margin-top:4px;color:var(--muted);font-size:12.5px}.vstats span{display:inline-flex;align-items:center;gap:5px}
+.vstats svg,.vp-eng svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}
+.vp-box{overflow:auto}.vp-box>*{flex-shrink:0}
+.vp-eng{display:flex;align-items:center;gap:18px;flex-wrap:wrap;color:var(--text2);font-size:14px}
+.vp-eng>span{display:inline-flex;align-items:center;gap:6px}.vp-eng b{color:var(--text)}
+.vp-like{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 16px;border-radius:999px;border:1px solid var(--line2);background:var(--card2);color:var(--text);font:inherit;font-size:14px;cursor:pointer;transition:.2s}
+.vp-like:hover{border-color:#f472b6}.vp-like.on{background:rgba(244,114,182,.15);border-color:#f472b6;color:#f9a8d4}.vp-like.on svg{fill:#f472b6;stroke:#f472b6}
+.vp-cm{display:flex;flex-direction:column;gap:12px;padding-bottom:6px}
+.vp-cform{display:grid;grid-template-columns:200px 1fr auto;gap:10px;align-items:start}
+.vp-cform input,.vp-cform textarea{font:inherit;font-size:14px;color:var(--text);background:var(--card2);border:1px solid var(--line2);border-radius:12px;padding:10px 12px;resize:vertical;min-height:44px}
+.vp-cform button{height:44px;padding:0 18px;border-radius:12px;border:0;background:var(--gold);color:#1c1405;font:inherit;font-weight:700;cursor:pointer}
+.vp-cmsg{font-size:13.5px}.vp-cmsg.ok{color:#4ade80}.vp-cmsg.err{color:#f87171}
+.vp-clist{display:flex;flex-direction:column;gap:10px}
+.vp-c{padding:12px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.vp-ch{display:flex;justify-content:space-between;gap:10px}.vp-ch small{color:var(--muted);font-size:12px}
+.vp-c p{margin:6px 0 0;color:var(--text2);line-height:1.8;white-space:pre-wrap}
+.vp-cr{margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(245,212,138,.08);border-inline-start:3px solid var(--gold)}.vp-cr b{color:var(--gold);font-size:13px}
+.vp-cnone{color:var(--muted);font-size:14px;margin:0}
+@media(max-width:640px){.vp-cform{grid-template-columns:1fr}}
