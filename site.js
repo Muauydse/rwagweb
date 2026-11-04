@@ -68,7 +68,7 @@ $('#contactForm').addEventListener('submit', async e => {
 let PLANS = null;
 async function loadPlans() {
   const r = await api('/api/public/plans');
-  PLANS = r.ok && r.plans && r.plans.length ? { plans: r.plans, currency: r.currency, payMethods: r.payMethods, live: true } : { plans: C.FALLBACK_PLANS || [], currency: C.CURRENCY || 'ر.س', payMethods: ['تحويل بنكي'], live: false };
+  PLANS = r.ok && r.plans && r.plans.length ? { plans: r.plans, currency: r.currency, payMethods: r.payMethods, bankInfo: r.bankInfo || '', live: true } : { plans: C.FALLBACK_PLANS || [], currency: C.CURRENCY || 'ر.س', payMethods: ['تحويل بنكي'], live: false };
   $('#plansGrid').innerHTML = PLANS.plans.map(p => `<div class="plan ${p.highlight ? 'best' : ''} reveal in">${p.highlight ? '<span class="tag">الأكثر توفيراً</span>' : ''}<h4>${esc(p.name)}</h4><span class="dur">${esc(p.duration || '')}</span>
     <div class="price">${fmt(p.price)} <small>${esc(PLANS.currency)}</small></div><ul>${(p.features || []).map(f => `<li>${esc(f)}</li>`).join('')}</ul>
     <button class="btn ${p.highlight ? 'gold' : 'glass'} block" data-signup="${esc(p.id)}">اشترك في هذه الباقة</button></div>`).join('') || '<div class="plans-loading">تواصل معنا لمعرفة الباقات</div>';
@@ -133,6 +133,7 @@ function validate() {
   return true;
 }
 async function openSignup(planId) {
+  M.mode = 'signup'; setHead(false);
   if (!PLANS) await loadPlans();
   Object.assign(M, { step: 0, planId: planId || (PLANS.plans.find(p => p.highlight) || PLANS.plans[0] || {}).id, coupon: '', discount: 0, final: null });
   $('#mNext').hidden = false; $('#mBack').hidden = false; $('#mWa').hidden = true;
@@ -172,6 +173,113 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-close]') || e.target === modal) closeSignup();
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeSignup(); });
+
+/* ---------------- تجديد الاشتراك — لعميل له حساب فقط (بالرقم التسلسلي أو الجوال المسجّل) ---------------- */
+const RN = { step: 0, id: '', planId: null, method: '', notes: '' };
+const HEAD = $('#signup .sg-head > div').innerHTML;
+function setHead(renew) {
+  $('#signup .sg-head > div').innerHTML = renew ? `<h3><svg class="sg-spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.7M20 4v4.7h-4.7M20 12a8 8 0 0 1-13.7 5.6L4 15.3M4 20v-4.7h4.7"/></svg> تجديد الاشتراك</h3><small>للمشتركين الحاليين — جدّد باقتك في دقيقة</small>` : HEAD;
+}
+const rnPlan = () => PLANS.plans.find(p => p.id === RN.planId);
+function rnSum() { $('#mSum').innerHTML = RN.step > 0 && rnPlan() ? `${esc(rnPlan().name)} — <b>${fmt(rnPlan().price)}</b> ${esc(PLANS.currency)}` : ''; }
+function rnDraw() {
+  $('#mSteps').innerHTML = ['بيانات اشتراكك', 'الباقة وطريقة الدفع', 'المراجعة والإرسال'].map((t, i) => `<div class="sg-step ${i === RN.step ? 'active' : i < RN.step ? 'done' : ''}"><span>${i < RN.step ? CHK : i + 1}</span>${t}</div>`).join('<i></i>');
+  $('#mBack').style.visibility = RN.step ? 'visible' : 'hidden';
+  $('#mNext').innerHTML = RN.step === 2 ? 'إرسال طلب التجديد' : 'التالي ‹';
+  if (RN.step === 0) {
+    body.innerHTML = `<p class="sg-intro">اكتب <b>الرقم التسلسلي</b> لجهازك أو <b>رقم الجوال المسجّل</b> في اشتراكك — نتحقق أن لديك حساباً ثم تختار باقة التجديد.</p>
+      <div class="sg-serial" style="max-width:none"><span>الرقم التسلسلي أو رقم الجوال المسجّل</span><input class="ltr" dir="ltr" id="rnId" value="${esc(RN.id)}" placeholder="RWJ-XXXX-XXXX-XXXX-XXXX  أو  05xxxxxxxx" autocomplete="off">
+      <small>الرقم التسلسلي يظهر أسفل شاشة الدخول في النظام، وفي «حسابي واشتراكي»</small></div>`;
+    setTimeout(() => $('#rnId') && $('#rnId').focus(), 30);
+    $('#rnId').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('#mNext').click(); } };
+  } else if (RN.step === 1) {
+    const pm = PLANS.payMethods || [];
+    body.innerHTML = `<div class="sg-plans">${PLANS.plans.map(p => `<button type="button" class="sg-plan ${p.highlight ? 'best' : ''} ${p.id === RN.planId ? 'active' : ''}" data-p="${esc(p.id)}">${p.highlight ? '<span class="tag">الأوفر</span>' : ''}
+        <div class="nm">${esc(p.name)}</div><div class="pr">${fmt(p.price)} <small>${esc(PLANS.currency)}</small></div><div class="du">${esc(p.duration || '')}</div></button>`).join('')}</div>
+      ${pm.length ? `<div class="sg-pay"><span>طريقة الدفع</span><div>${pm.map(x => `<button type="button" class="sg-pm ${x === RN.method ? 'active' : ''}" data-m="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
+      <label class="sg-field full" style="margin-top:14px"><span>ملاحظة (اختياري)</span><input id="rnNotes" value="${esc(RN.notes)}" placeholder="مثال: أرغب بالتجديد على نفس الجهاز"></label>`;
+    $$('[data-p]', body).forEach(b => b.onclick = () => { RN.planId = b.dataset.p; T('renew_plan', rnPlan().name); $$('[data-p]', body).forEach(x => x.classList.toggle('active', x === b)); rnSum(); });
+    $$('[data-m]', body).forEach(b => b.onclick = () => { RN.method = b.dataset.m; $$('[data-m]', body).forEach(x => x.classList.toggle('active', x === b)); });
+  } else {
+    const row = (k, v, l) => v ? `<div><div class="k">${k}</div><div class="v ${l ? 'ltr' : ''}">${esc(v)}</div></div>` : '';
+    body.innerHTML = `<div class="sg-plan-sum"><div><div class="k">باقة التجديد</div><div class="nm">${esc(rnPlan().name)}</div><div class="du">${esc(rnPlan().duration || '')}</div></div>
+        <div class="pr"><b>${fmt(rnPlan().price)} <small>${esc(PLANS.currency)}</small></b></div></div>
+      <div class="sg-info">${row('رقم الاشتراك', RN.id, 1)}${row('طريقة الدفع', RN.method)}${row('ملاحظة', RN.notes)}</div>
+      <p class="sg-intro" style="margin-top:14px">تُضاف مدة الباقة إلى تاريخ انتهاء اشتراكك الحالي — لا تخسر الأيام المتبقية. بعد تأكيد وصول المبلغ يتجدد النظام على جهازك تلقائياً.</p>
+      <label class="sg-agree"><input type="checkbox" id="agree"> أؤكد أن هذا اشتراكي، وسأدفع بالطريقة المختارة.</label>`;
+  }
+  rnSum();
+}
+function rnNotFound() {
+  RN.step = 'nf'; $('#mSteps').innerHTML = ''; $('#mBack').style.visibility = 'visible'; $('#mNext').hidden = true; $('#mSum').innerHTML = '';
+  const serial = /^RWJ-/i.test(RN.id) ? RN.id.toUpperCase() : '', mobile = serial ? '' : RN.id;
+  body.innerHTML = `<div class="sg-done"><h3>لم نجد اشتراكاً بهذا الرقم</h3><p>تأكد من كتابة الرقم التسلسلي أو رقم الجوال المسجّل بشكل صحيح، أو اختر:</p>
+    <div class="sg-nf"><button type="button" class="sg-btn pri" id="nfNew">${ic('sparkles')} اشترك الآن</button><button type="button" class="sg-btn sec" id="nfSup">${ic('chat')} تواصل مع الدعم</button></div>
+    <p class="sg-muted">إذا كنت مشتركاً وغيّرت رقم جوالك أو جهازك، تواصل مع الدعم وسنساعدك.</p></div>`;
+  $('#nfNew').onclick = () => { const plan = RN.planId; openSignup(plan); M.info = { ...M.info, mobile: mobile || M.info.mobile || '', serial: serial || M.info.serial || '' }; T('renew_to_signup', RN.id); };
+  $('#nfSup').onclick = () => {
+    closeSignup(); const f = $('#contactForm'); if (!f) return;
+    if (mobile) f.phone.value = mobile;
+    try { f.category.value = [...f.category.options].find(o => /مشكلة|استفسار/.test(o.text)).text; } catch (e) { }
+    f.message.value = `أرغب بتجديد اشتراكي ولم يُعثر على حسابي.\nالرقم المُدخل: ${RN.id}`;
+    $('#support').scrollIntoView({ behavior: 'smooth' }); setTimeout(() => f.name.focus(), 600);
+  };
+}
+async function openRenew(planId) {
+  if (!PLANS) await loadPlans();
+  M.mode = 'renew'; setHead(true);
+  Object.assign(RN, { step: 0, planId: planId || RN.planId || (PLANS.plans.find(p => p.highlight) || PLANS.plans[0] || {}).id, method: RN.method || '' });
+  $('#mNext').hidden = false; $('#mBack').hidden = false; $('#mWa').hidden = true;
+  modal.hidden = false; document.body.style.overflow = 'hidden';
+  if (!PLANS.live) {
+    $('#mSteps').innerHTML = ''; $('#mNext').hidden = true; $('#mBack').hidden = true;
+    body.innerHTML = `<div class="sg-done"><h3>تعذر الاتصال الآن</h3><p>تحقق من الإنترنت أو تواصل معنا عبر واتساب لتجديد اشتراكك</p><p style="margin-top:16px"><a class="sg-btn wa" href="${wa('السلام عليكم، أرغب بتجديد اشتراكي في نظام رواج')}" target="_blank" rel="noopener">${ic('chat')} تواصل عبر واتساب</a></p></div>`;
+    return;
+  }
+  rnDraw();
+}
+async function renewNext() {
+  const b = $('#mNext');
+  if (RN.step === 3) return closeSignup();
+  if (RN.step === 0) {
+    RN.id = ($('#rnId').value || '').trim().replace(/\s+/g, '');
+    const serial = /^RWJ(-[A-Z0-9]{4}){4}$/i.test(RN.id), phone = /^\+?\d{9,15}$/.test(RN.id.replace(/-/g, ''));
+    if (!serial && !phone) return toast('اكتب الرقم التسلسلي (RWJ-XXXX-XXXX-XXXX-XXXX) أو رقم الجوال', 1);
+    b.disabled = true; b.textContent = 'جارٍ التحقق…';
+    const r = await api('/api/public/renew', { id: RN.id, check: true });
+    b.disabled = false; b.innerHTML = 'التالي ‹';
+    if (r.notFound) { T('renew_not_found', ''); return rnNotFound(); }
+    if (!r.ok) return toast(r.error || 'تعذر التحقق الآن — حاول مرة أخرى', 1);
+    RN.step = 1; return rnDraw();
+  }
+  if (RN.step === 1) {
+    RN.notes = ($('#rnNotes').value || '').trim();
+    if (!RN.planId) return toast('اختر باقة التجديد', 1);
+    if ((PLANS.payMethods || []).length && !RN.method) return toast('اختر طريقة الدفع', 1);
+    RN.step = 2; return rnDraw();
+  }
+  if (!$('#agree').checked) return toast('يرجى التأكيد للمتابعة', 1);
+  b.disabled = true; b.textContent = 'جارٍ الإرسال…';
+  const r = await api('/api/public/renew', { id: RN.id, planId: RN.planId, payMethod: RN.method, notes: RN.notes });
+  b.disabled = false;
+  if (r.notFound) return rnNotFound();
+  if (!r.ok) { b.textContent = 'إرسال طلب التجديد'; return toast(r.error || 'تعذر إرسال الطلب — حاول مرة أخرى', 1); }
+  T('renew_sent', rnPlan().name);
+  RN.step = 3; $('#mSteps').innerHTML = ''; $('#mBack').hidden = true; b.textContent = 'تم'; $('#mSum').innerHTML = '';
+  const bank = PLANS.bankInfo && /تحويل|بنك/.test(RN.method) ? `<div class="sg-bank"><b>بيانات التحويل</b><pre>${esc(PLANS.bankInfo)}</pre></div>` : '';
+  body.innerHTML = `<div class="sg-done"><div class="sg-check">${CHK}</div><h3>تم استلام طلب التجديد</h3>
+    <p>شكراً لك — بعد التأكد من وصول المبلغ <b>يتجدد اشتراكك تلقائياً</b> ويتحدث النظام على جهازك خلال ثوانٍ.</p>
+    <div class="sg-muted">الباقة: ${esc(rnPlan().name)} · <b>${fmt(rnPlan().price)}</b> ${esc(PLANS.currency)}${RN.method ? ' · ' + esc(RN.method) : ''}</div>${bank}</div>`;
+}
+const sgNext = $('#mNext').onclick, sgBack = $('#mBack').onclick;
+$('#mNext').onclick = e => M.mode === 'renew' ? renewNext() : sgNext(e);
+$('#mBack').onclick = e => {
+  if (M.mode !== 'renew') return sgBack(e);
+  if (RN.step === 'nf') { $('#mNext').hidden = false; RN.step = 0; return rnDraw(); }
+  if (RN.step === 1) RN.notes = ($('#rnNotes').value || '').trim();
+  RN.step = Math.max(0, RN.step - 1); rnDraw();
+};
+document.addEventListener('click', e => { const r = e.target.closest('[data-renew]'); if (r) { e.preventDefault(); openRenew(r.dataset.renew || null); } });
 
 /* ---------------- الحركة والتنقل ---------------- */
 // الجوال يستعيد آخر موضع تمرير عند الفتح (وأحياناً ينزل لأسفل الصفحة) — نبدأ دائماً من الأعلى ما لم يكن في الرابط قسم محدد

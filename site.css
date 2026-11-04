@@ -343,3 +343,16 @@ svg.logo{display:block;width:42px;aspect-ratio:1;flex:none}
 .soc-pill:hover{border-color:var(--c)}.soc-pill:hover svg{fill:var(--c)}
 @media(max-width:980px){.vgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.vp-main{grid-template-columns:1fr}.vp-list{flex-direction:row;max-height:none;overflow-x:auto}.vp-it{flex-direction:column;align-items:flex-start;width:150px;flex:none}.vp-it span{width:150px}}
 @media(max-width:640px){.vgrid{grid-template-columns:1fr}.vcard.feat{grid-column:auto;grid-row:auto}.vp{padding:10px}.vp-nav{display:none}.vp-foot{flex-direction:column;align-items:flex-start}.vp-title{font-size:16px}}
+
+/* تجديد الاشتراك */
+.renew-cta{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;max-width:860px;margin:22px auto 0;padding:16px 20px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03)}
+.renew-cta b{display:block;font-size:16px}.renew-cta span{color:var(--muted);font-size:14px}
+.sg-pay{margin-top:16px}.sg-pay>span{display:block;font-size:13px;font-weight:700;color:var(--a-text);margin-bottom:8px}
+.sg-pay>div{display:flex;flex-wrap:wrap;gap:8px}
+.sg-pm{height:40px;padding:0 16px;border-radius:10px;border:1.5px solid var(--a-border);background:var(--a-surface);color:var(--a-text);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.sg-pm:hover{border-color:var(--a-pri)}.sg-pm.active{border-color:var(--a-pri);background:var(--a-pri50);color:var(--a-pri)}
+.sg-nf{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0 6px}
+.sg-bank{margin:16px auto 0;max-width:420px;text-align:right;padding:12px 14px;border:1px dashed var(--a-border);border-radius:12px;background:var(--a-s2)}
+.sg-bank b{font-size:13px}.sg-bank pre{margin:6px 0 0;font:inherit;font-size:13.5px;white-space:pre-wrap;color:var(--a-text)}
+
+@media (max-width:720px){.nav-cta [data-renew]{display:none}}
